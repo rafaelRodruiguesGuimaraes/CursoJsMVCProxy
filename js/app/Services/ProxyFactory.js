@@ -2,11 +2,11 @@ class ProxyFactory{
     
     static criate(objeto, props, acao){
 
-        return new Proxy(objeto, {
+        return new Proxy(objeto, { 
 
             get(target, prop, receiver){
 
-                if(props.includes(prop) && typeof(target[prop]) == typeof(Function)){
+                if(props.includes(prop) && ProxyFactory._seEhFuncao(target[prop])){
 
                     return function(){
                         console.log(`A ${prop} foi interceptada`);
@@ -21,13 +21,18 @@ class ProxyFactory{
             set(target, prop, value, receiver){
 
                 if(props.includes(prop)){
-                    
-                    acao(target);
-                    target(prop) = value;
+                
+                    target[prop] = value;    
+                    acao(target);                
                 }
                 
                 return Reflect.set(target, prop, value, receiver);
             }
         });
+    }
+
+    static _seEhFuncao(funcao){
+
+        return typeof(funcao) == typeof(Function);
     }
 }

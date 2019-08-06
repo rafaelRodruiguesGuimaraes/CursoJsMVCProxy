@@ -5,34 +5,23 @@ class NegociacaoController {
         let $ = document.querySelector.bind(document);
         this._inputData = $('#data');
         this._inputQuantidade = $('#quantidade');
-        this._inputValor = $('#valor');
-
-        let self = this;
-
-        this._listaNegociacoes = new Proxy(new ListaNegociacoes(), {
-
-            get(target, prop, receiver){
-
-                if(['adiciona', 'esvazia'].includes(prop) && typeof(target[prop]) == typeof(Function)){
-
-                    return function(){
-                        console.log(`A ${prop} foi intercepatada`);
-                        Reflect.apply(target[prop], target, arguments);
-                        self._negociacoesView.update(target);
-                    }
-                }
-
-                return Reflect.get(target, prop, receiver);
-            }
-
-        });
+        this._inputValor = $('#valor');  
+        
+        this._listaNegociacoes = ProxyFactory.criate(new ListaNegociacoes(), 
+            ['adiciona', 'esvazia'], model => 
+                this._negociacoesView.update(model));
 
         this._negociacoesView = new NegociacoesView($('#negociacoesView'));
         this._negociacoesView.update(this._listaNegociacoes);
         
-        this._mensagem = new Mensagem();
+        this._mensagem = ProxyFactory.criate(new Mensagem(), 
+            ['texto'], model =>
+                this._mensagemView.update(model)
+        );
+
         this._mensagemView = new MensagemView($('#mensagemView')); 
         this._mensagemView.update(this._mensagem);
+        
         
     }
     
@@ -40,13 +29,8 @@ class NegociacaoController {
         
         event.preventDefault();
         this._listaNegociacoes.adiciona(this._criaNegociacao());
-        
         this._mensagem.texto = 'Negociação adicionada com sucesso';
-        this._mensagemView.update(this._mensagem);
-        
-        this._limpaFormulario();   
-
-        console.log(this._listaNegociacoes);
+        this._limpaFormulario();
     }
     
     _criaNegociacao() {
@@ -67,9 +51,14 @@ class NegociacaoController {
 
     apaga(){
     
-        this._listaNegociacoes.esvazia();
+        if(this._listaNegociacoes.negociacoes == false){
 
-        this._mensagem.texto = 'A tabela foi excluida!';
-        this._mensagemView.update(this._mensagem);
+            this._mensagem.texto = 'Não existe itens para serem apagados'
+        }
+        else{
+
+            this._listaNegociacoes.esvazia();
+            this._mensagem.texto = 'A tabela foi excluida!';
+        }   
     }
 }
