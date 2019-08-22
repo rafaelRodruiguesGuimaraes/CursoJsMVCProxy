@@ -4,6 +4,8 @@ class NegociacaoController {
         
         let $ = document.querySelector.bind(document);
         
+        this._ordemAtual = '';
+        
         this._inputData = $('#data');
         this._inputQuantidade = $('#quantidade');
         this._inputValor = $('#valor');
@@ -11,7 +13,7 @@ class NegociacaoController {
         this._listaNegociacoes = new Bind(
             new ListaNegociacoes(), 
             new NegociacoesView($('#negociacoesView')), 
-            'adiciona', 'esvazia');
+            'adiciona', 'esvazia', 'ordena', 'inverterOrdem');
        
         this._mensagem = new Bind(
             new Mensagem(), new MensagemView($('#mensagemView')),
@@ -19,23 +21,32 @@ class NegociacaoController {
     }
     
     adiciona(event) {
-        
+
+        try{     
         event.preventDefault();
         this._listaNegociacoes.adiciona(this._criaNegociacao());
         this._mensagem.texto = 'Negociação adicionada com sucesso'; 
-        this._limpaFormulario();   
+        this._limpaFormulario();
+        } catch(erro){
+            this._mensagem.texto = erro;
+        }   
+    }
+    
+    importaNegociacoes() {
+        
+        let service = new NegociacaoService();
+        
+            service.obterNegociacoes()
+            .then(negociacoes => {negociacoes
+            .forEach(negociacao => this._listaNegociacoes.adiciona(negociacao));
+            this._mensagem.texto = 'negociacaoes importadas com sucesso!'})
+            .catch(erro => this._mensagem.texto = erro);
     }
     
     apaga() {
-
-        if (this._listaNegociacoes.negociacoes == false){
-
-            this._mensagem.texto = 'Não existem itens para serem apagados'
-        } else{
         
         this._listaNegociacoes.esvazia();
         this._mensagem.texto = 'Negociações apagadas com sucesso';
-        }   
     }
     
     _criaNegociacao() {
@@ -45,25 +56,7 @@ class NegociacaoController {
             this._inputQuantidade.value,
             this._inputValor.value);    
     }
-
-    importaNegociacao(){
-
-        let importaNegociacao = new ImportaNegociacoes()
-
-            importaNegociacao.importa((erro, nogociacoes) => {
-            
-                if(erro){
-                    this._mensagem.texto = erro;
-                    return;
-                } 
-                
-                nogociacoes.forEach(negociacao => this._listaNegociacoes.adiciona(negociacao));
-                this._mensagem.texto = 'Negociações importadas com sucesso!'
-            }
-    )};
-
-               
-      
+    
     _limpaFormulario() {
      
         this._inputData.value = '';
@@ -71,4 +64,17 @@ class NegociacaoController {
         this._inputValor.value = 0.0;
         this._inputData.focus();   
     }
+
+    ordena(coluna){
+
+        if(this._ordemAtual == coluna){
+
+            this._listaNegociacoes.inverterOrdem()
+        } else{
+
+            this._listaNegociacoes.ordena((a,b) => a[coluna] - b[coluna])
+            }; 
+            
+            this._ordemAtual = coluna;
+        }
 }
